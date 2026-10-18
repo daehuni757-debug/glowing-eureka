@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ABILITY ARENA - Prototype</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#141d33;--line:#2a3858;--cyan:#55e6ff;--pink:#ff6bba;--gold:#ffd166}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#182747,#090d19 60%);color:#edf4ff;font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif}
+main{max-width:1000px;margin:auto;padding:18px}header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{margin:0;font-size:clamp(24px,5vw,38px);letter-spacing:1px}h1 span{color:var(--cyan)}.tag{border:1px solid var(--line);border-radius:999px;padding:6px 10px;color:#b8c8e8;font-size:12px}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:14px;margin-top:18px}
+.panel{background:#111a2dcc;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 10px 28px #0003}
+h2{font-size:17px;margin:0 0 12px}label{display:block;color:#b9c8e4;font-size:13px;margin:12px 0 6px}
+input,select,button{font:inherit}input,select{width:100%;padding:11px;border-radius:10px;border:1px solid #344568;background:#0b1224;color:white}
+button{border:0;border-radius:10px;padding:11px 13px;background:var(--cyan);color:#06101c;font-weight:750;cursor:pointer}
+button.secondary{background:#253452;color:#eaf2ff;border:1px solid #3a4b70}button:active{transform:translateY(1px)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.stat{background:#0b1224;border:1px solid var(--line);border-radius:10px;padding:9px;text-align:center}.stat small{display:block;color:#91a4c9}.stat strong{font-size:18px}
+.arena{position:relative;min-height:320px;border-radius:13px;overflow:hidden;border:1px solid #2d4164;background:linear-gradient(#101c31dd,#0c1425ee),repeating-linear-gradient(0deg,transparent 0 39px,#243655 40px),repeating-linear-gradient(90deg,transparent 0 39px,#243655 40px)}
+.arena:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,#1c416155,transparent 60%);pointer-events:none}
+.fighter{position:absolute;width:34px;height:34px;border-radius:11px;border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;box-shadow:0 0 18px currentColor;transform:translate(-50%,-50%);z-index:2}
+.player{background:#11bde7;color:#04121b}.bot{background:#ff559d;color:#250516}.projectile{position:absolute;width:12px;height:12px;border-radius:50%;background:var(--gold);box-shadow:0 0 16px var(--gold);transform:translate(-50%,-50%);z-index:3}
+.hud{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;color:#b9c8e4;font-size:12px;margin:10px 0}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.actions button{flex:1;min-width:90px}
+.note{font-size:12px;color:#9eb0d1;line-height:1.55;margin-top:10px}.log{min-height:48px;color:#dce8ff;font-size:13px;margin-top:10px}
+.mobile-controls{display:none;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.mobile-controls button{padding:14px 8px}
+footer{color:#8498bd;font-size:12px;margin:16px 2px}
+@media(max-width:720px){main{padding:12px}.layout{grid-template-columns:1fr}.arena{min-height:300px}.mobile-controls{display:grid}.panel{padding:13px}}
+</style>
+</head>
+<body>
+<main>
+<header><h1><span>ABILITY</span> ARENA</h1><div class="tag">PLAYABLE PROTOTYPE · v0.1</div></header>
+<p style="color:#b9c8e4;margin:8px 0 0">능력을 조합하고 훈련용 상대와 대결해 보세요.</p>
+<div class="layout">
+<section class="panel">
+<h2>1. 플레이어 설정</h2>
+<label for="nickname">닉네임</label><input id="nickname" maxlength="16" value="PLAYER" placeholder="닉네임 입력">
+<label for="element">능력 속성</label><select id="element"><option value="energy">에너지 탄환</option><option value="wind">바람 파동</option><option value="flame">화염 구체</option><option value="frost">빙결 파동</option></select>
+<label for="effect">부가 효과</label><select id="effect"><option value="damage">강한 피해</option><option value="rapid">빠른 재사용</option><option value="wide">넓은 범위</option></select>
+<div class="stats"><div class="stat"><small>위력</small><strong id="power">25</strong></div><div class="stat"><small>쿨다운</small><strong id="cooldown">1.0초</strong></div><div class="stat"><small>범위</small><strong id="range">중간</strong></div></div>
+<button id="saveAbility" style="width:100%">능력 저장하기</button>
+<p class="note">속성과 효과를 선택하고 저장하세요. 선택에 따라 위력·쿨다운·범위가 바뀝니다.</p>
+<hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+<h2>2. 훈련 대전</h2>
+<label for="bots">상대 수 (훈련용)</label><select id="bots"><option value="1">1명</option><option value="2" selected>2명</option><option value="3">3명</option><option value="4">4명</option></select>
+<div class="actions"><button id="start">대전 시작 / 재시작</button><button id="pause" class="secondary">일시 정지</button></div>
+<p class="note">현재 상대는 브라우저 안에서 움직이는 훈련용 봇입니다. 온라인 친구 대전은 아직 연결되지 않았습니다.</p>
+</section>
+<section class="panel">
+<h2>ARENA</h2>
+<div class="hud"><span id="status">대기 중</span><span>이동: WASD / 방향키 · 스킬: Space</span></div>
+<div id="arena" class="arena" aria-label="게임 경기장"></div>
+<div class="stats">
+<div class="stat"><small>체력</small><strong id="hp">100</strong></div>
+<div class="stat"><small>처치</small><strong id="kills">0</strong></div>
+<div class="stat"><small>생존 시간</small><strong id="time">0초</strong></div>
+</div>
+<div class="actions"><button id="cast">스킬 사용</button><button id="reset" class="secondary">초기화</button></div>
+<div class="mobile-controls">
+<button data-move="up">▲</button><span></span><button data-move="right">▶</button>
+<button data-move="left">◀</button><button data-move="down">▼</button><button data-move="cast">스킬</button>
+</div>
+<div id="log" class="log">능력을 저장한 뒤 대전을 시작하세요.</div>
+</section>
+</div>
+<footer>프로토타입 안내: 이 파일은 로컬 훈련용입니다. 방 생성·방 코드·실시간 온라인 동기화·계정 저장은 다음 단계에서 별도 서버와 연결해야 합니다.</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const stats={
+ energy:{damage:25,rapid:17,wide:20},
+ wind:{damage:22,rapid:16,wide:24},
+ flame:{damage:30,rapid:19,wide:27},
+ frost:{damage:20,rapid:15,wide:25}
+};
+let ability={element:"energy",effect:"damage",damage:25,cooldown:1000,radius:105};
+let player={x:50,y:50,hp:100},bots=[],shots=[],keys={},running=false,paused=false,kills=0,startAt=0,lastCast=0,raf=0,lastFrame=0;
+function updateBuild(){
+ const el=$("element").value,ef=$("effect").value;
+ const damage=stats[el][ef],cooldown=ef==="rapid"?550:ef==="wide"?1300:1000,radius=ef==="wide"?150:el==="wind"?120:95;
+ $("power").textContent=damage;$("cooldown").textContent=(cooldown/1000).toFixed(2)+"초";$("range").textContent=radius>120?"넓음":radius<100?"좁음":"중간";
+}
+$("element").addEventListener("change",updateBuild);$("effect").addEventListener("change",updateBuild);
+$("saveAbility").onclick=()=>{ability.element=$("element").value;ability.effect=$("effect").value;ability.damage=stats[ability.element][ability.effect];ability.cooldown=ability.effect==="rapid"?550:ability.effect==="wide"?1300:1000;ability.radius=ability.effect==="wide"?150:ability.element==="wind"?120:95;$("log").textContent="능력 저장 완료! "+$("element").selectedOptions[0].text+" / "+$("effect").selectedOptions[0].text;};
+function spawnBots(n){bots=[];for(let i=0;i<n;i++)bots.push({x:15+Math.random()*70,y:15+Math.random()*70,hp:60,alive:true,id:i+1,cd:0});}
+function render(){
+ const arena=$("arena");arena.innerHTML="";
+ const p=document.createElement("div");p.className="fighter player";p.style.left=player.x+"%";p.style.top=player.y+"%";p.textContent="YOU";arena.appendChild(p);
+ bots.forEach(b=>{if(!b.alive)return;const e=document.createElement("div");e.className="fighter bot";e.style.left=b.x+"%";e.style.top=b.y+"%";e.textContent="B"+b.id;arena.appendChild(e);});
+ shots.forEach(s=>{const e=document.createElement("div");e.className="projectile";e.style.left=s.x+"%";e.style.top=s.y+"%";arena.appendChild(e);});
+ $("hp").textContent=Math.max(0,Math.round(player.hp));$("kills").textContent=kills;$("time").textContent=running?Math.floor((Date.now()-startAt)/1000)+"초":"0초";
+}
+function cast(){
+ if(!running||paused)return;
+ const now=Date.now();if(now-lastCast<ability.cooldown){$("log").textContent="스킬 재사용 대기 중!";return;}lastCast=now;
+ let target=null,dist=Infinity;
+ bots.forEach(b=>{if(!b.alive)return;const d=Math.hypot(b.x-player.x,b.y-player.y);if(d<dist){dist=d;target=b;}});
+ if(target&&dist<ability.radius/5){
+   target.hp-=ability.damage;if(target.hp<=0){target.alive=false;kills++;$("log").textContent="훈련 상대 B"+target.id+" 처치!";}else $("log").textContent="명중! 상대 체력 "+target.hp;
+ }else{$("log").textContent="스킬 발동! 가까운 상대가 없어 빗나갔습니다.";}
+ render();
+}
+function loop(t){
+ if(!running)return;raf=requestAnimationFrame(loop);if(paused)return;
+ const dt=Math.min(40,t-(lastFrame||t));lastFrame=t;const step=dt*.012;
+ if(keys.ArrowUp||keys.w)player.y-=step;if(keys.ArrowDown||keys.s)player.y+=step;if(keys.ArrowLeft||keys.a)player.x-=step;if(keys.ArrowRight||keys.d)player.x+=step;
+ player.x=Math.max(4,Math.min(96,player.x));player.y=Math.max(6,Math.min(94,player.y));
+ bots.forEach(b=>{if(!b.alive)return;const dx=player.x-b.x,dy=player.y-b.y,d=Math.hypot(dx,dy)||1;b.x+=dx/d*step*.25;b.y+=dy/d*step*.25;b.cd-=dt;if(d<8&&b.cd<=0){player.hp-=5;b.cd=900;if(player.hp<=0){player.hp=0;running=false;$("status").textContent="패배 — 재시작을 눌러 다시 도전하세요";$("log").textContent="훈련 상대에게 패배했습니다.";}}});
+ render();if(!running)return;
+}
+$("start").onclick=()=>{cancelAnimationFrame(raf);player={x:50,y:50,hp:100};kills=0;startAt=Date.now();lastFrame=0;lastCast=0;spawnBots(Number($("bots").value));running=true;paused=false;$("status").textContent="훈련 대전 진행 중";$("pause").textContent="일시 정지";$("log").textContent="상대를 피하면서 가까이 다가가 스킬을 사용하세요.";render();raf=requestAnimationFrame(loop);};
+$("pause").onclick=()=>{if(!running)return;paused=!paused;$("pause").textContent=paused?"계속하기":"일시 정지";$("status").textContent=paused?"일시 정지":"훈련 대전 진행 중";};
+$("cast").onclick=cast;
+$("reset").onclick=()=>{running=false;paused=false;cancelAnimationFrame(raf);player={x:50,y:50,hp:100};bots=[];shots=[];kills=0;$("status").textContent="대기 중";$("log").textContent="초기화했습니다. 대전을 시작하세요.";$("pause").textContent="일시 정지";render();};
+window.addEventListener("keydown",e=>{if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key))e.preventDefault();keys[e.key]=true;if(e.code==="Space")cast();});
+window.addEventListener("keyup",e=>keys[e.key]=false);
+document.querySelectorAll("[data-move]").forEach(btn=>{
+ const action=btn.dataset.move;const down=e=>{e.preventDefault();if(action==="cast")cast();else keys[{up:"ArrowUp",down:"ArrowDown",left:"ArrowLeft",right:"ArrowRight"}[action]]=true;};
+ const up=e=>{e.preventDefault();if(action!=="cast")keys[{up:"ArrowUp",down:"ArrowDown",left:"ArrowLeft",right:"ArrowRight"}[action]]=false;};
+ btn.addEventListener("pointerdown",down);btn.addEventListener("pointerup",up);btn.addEventListener("pointercancel",up);btn.addEventListener("pointerleave",up);
+});
+updateBuild();render();
+</script>
+</body>
+</html>
